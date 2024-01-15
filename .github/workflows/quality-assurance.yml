@@ -25,6 +25,7 @@ env:
   FLYSYSTEM_AWS_S3_KEY: '${{ secrets.FLYSYSTEM_AWS_S3_KEY }}'
   FLYSYSTEM_AWS_S3_SECRET: '${{ secrets.FLYSYSTEM_AWS_S3_SECRET }}'
   FLYSYSTEM_AWS_S3_BUCKET: '${{ secrets.FLYSYSTEM_AWS_S3_BUCKET }}'
+  MONGODB_URI: 'mongodb://127.0.0.1:27017/'
   FLYSYSTEM_TEST_DANGEROUS_THINGS: "yes"
   FLYSYSTEM_TEST_SFTP: "yes"
 
@@ -70,6 +71,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: mongodb
           coverage: pcov
           tools: composer:v2
       - run: composer update --no-progress ${{ matrix.composer-flags }}
