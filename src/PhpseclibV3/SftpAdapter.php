@@ -38,13 +38,13 @@ class SftpAdapter implements FilesystemAdapter
     public function __construct(
         private ConnectionProvider $connectionProvider,
         string $root,
-        VisibilityConverter $visibilityConverter = null,
-        MimeTypeDetector $mimeTypeDetector = null,
+        ?VisibilityConverter $visibilityConverter = null,
+        ?MimeTypeDetector $mimeTypeDetector = null,
         private bool $detectMimeTypeUsingPath = false,
     ) {
         $this->prefixer = new PathPrefixer($root);
-        $this->visibilityConverter = $visibilityConverter ?: new PortableVisibilityConverter();
-        $this->mimeTypeDetector = $mimeTypeDetector ?: new FinfoMimeTypeDetector();
+        $this->visibilityConverter = $visibilityConverter ?? new PortableVisibilityConverter();
+        $this->mimeTypeDetector = $mimeTypeDetector ?? new FinfoMimeTypeDetector();
     }
 
     public function fileExists(string $path): bool
@@ -56,6 +56,11 @@ class SftpAdapter implements FilesystemAdapter
         } catch (Throwable $exception) {
             throw UnableToCheckFileExistence::forLocation($path, $exception);
         }
+    }
+
+    public function disconnect(): void
+    {
+        $this->connectionProvider->disconnect();
     }
 
     public function directoryExists(string $path): bool
@@ -337,8 +342,13 @@ class SftpAdapter implements FilesystemAdapter
     {
         try {
             $readStream = $this->readStream($source);
-            $visibility = $this->visibility($source)->visibility();
-            $this->writeStream($destination, $readStream, new Config(compact('visibility')));
+            $visibility = $config->get(Config::OPTION_VISIBILITY);
+
+            if ($visibility === null && $config->get(Config::OPTION_RETAIN_VISIBILITY, true)) {
+                $config = $config->withSetting(Config::OPTION_VISIBILITY, $this->visibility($source)->visibility());
+            }
+
+            $this->writeStream($destination, $readStream, $config);
         } catch (Throwable $exception) {
             if (isset($readStream) && is_resource($readStream)) {
                 @fclose($readStream);

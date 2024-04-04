@@ -57,14 +57,14 @@ class SftpAdapter implements FilesystemAdapter
     public function __construct(
         ConnectionProvider $connectionProvider,
         string $root,
-        VisibilityConverter $visibilityConverter = null,
-        MimeTypeDetector $mimeTypeDetector = null,
+        ?VisibilityConverter $visibilityConverter = null,
+        ?MimeTypeDetector $mimeTypeDetector = null,
         private bool $detectMimeTypeUsingPath = false,
     ) {
         $this->connectionProvider = $connectionProvider;
         $this->prefixer = new PathPrefixer($root);
-        $this->visibilityConverter = $visibilityConverter ?: new PortableVisibilityConverter();
-        $this->mimeTypeDetector = $mimeTypeDetector ?: new FinfoMimeTypeDetector();
+        $this->visibilityConverter = $visibilityConverter ?? new PortableVisibilityConverter();
+        $this->mimeTypeDetector = $mimeTypeDetector ?? new FinfoMimeTypeDetector();
     }
 
     public function fileExists(string $path): bool
@@ -348,7 +348,7 @@ class SftpAdapter implements FilesystemAdapter
         try {
             $readStream = $this->readStream($source);
             $visibility = $this->visibility($source)->visibility();
-            $this->writeStream($destination, $readStream, new Config(compact('visibility')));
+            $this->writeStream($destination, $readStream, new Config(compact(Config::OPTION_VISIBILITY)));
         } catch (Throwable $exception) {
             if (isset($readStream) && is_resource($readStream)) {
                 @fclose($readStream);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace League\Flysystem\PhpseclibV3;
 
-use League\Flysystem\AdapterTestUtilities\ToxiproxyManagement;
 use phpseclib3\Net\SFTP;
 use PHPUnit\Framework\TestCase;
 use Throwable;
@@ -277,12 +276,9 @@ class SftpConnectionProviderTest extends TestCase
             {
                 ++$this->calls;
 
-                return $connection->isConnected();
+                return false;
             }
         };
-
-        $managesConnectionToxics = ToxiproxyManagement::forServer();
-        $managesConnectionToxics->resetPeerOnRequest('sftp', 10);
 
         $maxTries = 2;
 
@@ -304,8 +300,6 @@ class SftpConnectionProviderTest extends TestCase
         try {
             $provider->provideConnection();
         } finally {
-            $managesConnectionToxics->removeAllToxics();
-
             self::assertSame($maxTries + 1, $connectivityChecker->calls);
         }
     }
@@ -379,7 +373,7 @@ class SftpConnectionProviderTest extends TestCase
      *
      * @throws Throwable
      */
-    public function runWithRetries(callable $scenario, string $expected = null): void
+    public function runWithRetries(callable $scenario, ?string $expected = null): void
     {
         $tries = 0;
         start:

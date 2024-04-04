@@ -1,6 +1,108 @@
 # Changelog
 
-## 3.16.0 - UNRELEASED
+## 3.26.0 - 2024-03-25
+
+### Fixed
+
+- Make SFTP connectivity pinging an opt-in feature.
+
+### Added 
+
+- Add `add_content_md5` option to AWS S3 (#1774)
+- Added AWS SSE-C options (#1773)
+
+## 3.25.1 - 2024-03-16
+
+### Fixed
+
+- Cleanup connection instance after disconnecting SFTP connection.
+- Fix upcoming PHP 8.4 deprecations (#1772) 
+
+## 3.25.0 - 2024-03-09
+
+### Added
+
+- [MountManager] added ability to (dangerously) mount additional filesystems
+- [FTP] added `disconnect` method to proactively close connections
+- [SFTP V3] added `disconnect` method to proactively close connections
+
+## 3.24.0 - 2024-02-04
+
+### Fixes
+
+- Updated method signatures to match upgraded dependency signatures for overrides (#1748, #1746)
+- Added missing path prefixing in FTP implementation (#1747)
+
+### Changes
+
+- Updated string assertions to use PHP 8 functions (#1750, #1749))
+
+## 3.23.1 - 2024-01-26
+
+### Changes
+
+- Updated license year
+
+## 3.23.0 - 2023-12-04
+
+### Fixed
+
+- Fixed upstream regression caused by resolving inconclusive mime-type.
+
+### Added
+
+- Made inconclusive mime-type resolving configurable on the local adapter.
+
+## 3.22.0 - 2023-12-03
+
+### Changes
+
+- Prevent double directory creation with lazy root creation for Local filesystem.
+
+### Fixes
+
+- Resolve to "inconclusive" mimetype instead of causing a type error by @GuySartorelli
+- Corrected spelling of a configuration key for the Azure adapter by @shineability
+
+### Additions
+
+- MountManager::extend allows for immutable dynamic extension of the mount manager.
+- Added a new abstract DecoratedAdapter for easier decoration of adapters by @jnoordsij
+
+## 3.21.0 - 2023-11-18
+
+### Changes
+
+- Retain visibility on local copy for local FS, in line with other adapter (#1730) by @jnoordsij
+
+## 3.20.0 - 2023-11-14
+
+### Changed
+
+- Normalise paths for public and temporary URLs (#1727)
+
+## 3.19.0 - 2023-11-07
+
+### Added
+
+- Configuration option to specify if visibility should be retained during copy/move operations
+- InMemoryFilesystemAdapter now supports visibility changes on move and copy.
+- Default visibility options are ignored when moving/copying while respecting visibility retention settings.
+- Local filesystem implementation now allows setting visibility on move and copy.
+
+## 3.18.0 - 2023-10-05
+
+### Added
+
+- Configuration option to specify how to handle same path copy/move operations (#1715)
+
+## 3.17.0 - 2023-10-05
+
+### Added
+
+- [AsyncAWS] Added support for version 2.0 of async-aws/{s3,simple-s3}
+
+## 3.16.0 - 2023-09-07
 
 ### Added
 
@@ -9,6 +111,7 @@
 ### Fixed
 
 - [ZipArchive] override on move
+- [WebDAV] encode path for propfind actions
 - [PathPrefixing]  [#1686](https://github.com/thephpleague/flysystem/issues/1686)
 
 ## 3.15.1 - 2023-05-04

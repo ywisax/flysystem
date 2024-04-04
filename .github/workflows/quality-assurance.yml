@@ -17,6 +17,8 @@ on:
     branches:
       - 2.x
       - 3.x
+  schedule:
+    - cron: "5 1 * * *"
 
 env:
   FLYSYSTEM_AWS_S3_KEY: '${{ secrets.FLYSYSTEM_AWS_S3_KEY }}'
@@ -45,15 +47,22 @@ jobs:
             phpstan: false
             phpunit-flags: '--no-coverage'
           - php: '8.2'
-            composer-flags: '--ignore-platform-reqs'
+            experimental: false
+            phpstan: false
+            phpunit-flags: '--no-coverage'
+          - php: '8.3'
+            experimental: false
+            phpstan: false
+            phpunit-flags: '--no-coverage'
+          - php: '8.4'
             experimental: true
             phpstan: false
             phpunit-flags: '--no-coverage'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: docker-compose -f docker-compose.yml up -d
       - name: Start an SSH Agent
-        uses: frankdejonge/use-ssh-agent@1.0.2
+        uses: frankdejonge/use-ssh-agent@1.1.0
       - run: chmod 0400 ./test_files/sftp/id_*
       - id: ssh_agent
         run: ssh-add ./test_files/sftp/id_rsa

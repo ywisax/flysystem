@@ -60,6 +60,7 @@ class FilesystemTest extends TestCase
 
     /**
      * @test
+     *
      * @dataProvider invalidStreamInput
      *
      * @param mixed $input
@@ -300,6 +301,7 @@ class FilesystemTest extends TestCase
 
     /**
      * @test
+     *
      * @dataProvider scenariosCausingPathTraversal
      */
     public function protecting_against_path_traversals(callable $scenario): void
@@ -377,7 +379,7 @@ class FilesystemTest extends TestCase
     public function listing_exceptions_are_uniformely_represented(): void
     {
         $filesystem = new Filesystem(
-            new class () extends InMemoryFilesystemAdapter {
+            new class() extends InMemoryFilesystemAdapter {
                 public function listContents(string $path, bool $deep): iterable
                 {
                     yield from parent::listContents($path, $deep);
@@ -398,7 +400,7 @@ class FilesystemTest extends TestCase
     public function failing_to_create_a_public_url(): void
     {
         $filesystem = new Filesystem(
-            new class () extends InMemoryFilesystemAdapter implements PublicUrlGenerator {
+            new class() extends InMemoryFilesystemAdapter implements PublicUrlGenerator {
                 public function publicUrl(string $path, Config $config): string
                 {
                     throw new UnableToGeneratePublicUrl('No reason', $path);
@@ -478,6 +480,26 @@ class FilesystemTest extends TestCase
         );
 
         self::assertSame('custom/file.txt', $filesystem->publicUrl('file.txt'));
+    }
+
+    /**
+     * @test
+     */
+    public function copying_from_and_to_the_same_location_fails(): void
+    {
+        $this->expectExceptionObject(UnableToCopyFile::fromLocationTo('from.txt', 'from.txt'));
+
+        $this->filesystem->copy('from.txt', 'from.txt');
+    }
+
+    /**
+     * @test
+     */
+    public function moving_from_and_to_the_same_location_fails(): void
+    {
+        $this->expectExceptionObject(UnableToMoveFile::fromLocationTo('from.txt', 'from.txt'));
+
+        $this->filesystem->move('from.txt', 'from.txt');
     }
 
     /**
@@ -594,6 +616,57 @@ class FilesystemTest extends TestCase
     /**
      * @test
      */
+    public function ignoring_same_paths_for_move_and_copy(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        $filesystem = new Filesystem(
+            new InMemoryFilesystemAdapter(),
+            [
+                Config::OPTION_COPY_IDENTICAL_PATH => ResolveIdenticalPathConflict::IGNORE,
+                Config::OPTION_MOVE_IDENTICAL_PATH => ResolveIdenticalPathConflict::IGNORE,
+            ]
+        );
+
+        $filesystem->move('from.txt', 'from.txt');
+        $filesystem->copy('from.txt', 'from.txt');
+    }
+
+    /**
+     * @test
+     */
+    public function failing_same_paths_for_move(): void
+    {
+        $filesystem = new Filesystem(
+            new InMemoryFilesystemAdapter(),
+            [
+                Config::OPTION_MOVE_IDENTICAL_PATH => ResolveIdenticalPathConflict::FAIL,
+            ]
+        );
+
+        $this->expectExceptionObject(UnableToMoveFile::fromLocationTo('from.txt', 'from.txt'));
+        $filesystem->move('from.txt', 'from.txt');
+    }
+
+    /**
+     * @test
+     */
+    public function failing_same_paths_for_copy(): void
+    {
+        $filesystem = new Filesystem(
+            new InMemoryFilesystemAdapter(),
+            [
+                Config::OPTION_COPY_IDENTICAL_PATH => ResolveIdenticalPathConflict::FAIL,
+            ]
+        );
+
+        $this->expectExceptionObject(UnableToCopyFile::fromLocationTo('from.txt', 'from.txt'));
+        $filesystem->copy('from.txt', 'from.txt');
+    }
+
+    /**
+     * @test
+     */
     public function unable_to_get_checksum_directory(): void
     {
         $filesystem = new Filesystem(new InMemoryFilesystemAdapter());
@@ -602,5 +675,160 @@ class FilesystemTest extends TestCase
         $this->expectException(UnableToProvideChecksum::class);
 
         $filesystem->checksum('foo');
+    }
+
+    /**
+     * @test
+     *
+     * @dataProvider fileMoveOrCopyScenarios
+     */
+    public function moving_a_file_with_visibility_scenario(
+        array $mainConfig,
+        array $moveConfig,
+        ?string $writeVisibility,
+        string $expectedVisibility
+    ): void {
+        // arrange
+        $filesystem = new Filesystem(
+            new InMemoryFilesystemAdapter(),
+            $mainConfig
+        );
+        $writeConfig = $writeVisibility ? ['visibility' => $writeVisibility] : [];
+        $filesystem->write('from.txt', 'contents', $writeConfig);
+
+        // act
+        $filesystem->move('from.txt', 'to.txt', $moveConfig);
+
+        // assert
+        $this->assertEquals($expectedVisibility, $filesystem->visibility('to.txt'));
+    }
+
+    /**
+     * @test
+     *
+     * @dataProvider fileMoveOrCopyScenarios
+     */
+    public function copying_a_file_with_visibility_scenario(
+        array $mainConfig,
+        array $copyConfig,
+        ?string $writeVisibility,
+        string $expectedVisibility
+    ): void {
+        // arrange
+        $filesystem = new Filesystem(
+            new InMemoryFilesystemAdapter(),
+            $mainConfig
+        );
+        $writeConfig = $writeVisibility ? ['visibility' => $writeVisibility] : [];
+        $filesystem->write('from.txt', 'contents', $writeConfig);
+
+        // act
+        $filesystem->copy('from.txt', 'to.txt', $copyConfig);
+
+        // assert
+        $this->assertEquals($expectedVisibility, $filesystem->visibility('to.txt'));
+    }
+
+    public static function fileMoveOrCopyScenarios(): iterable
+    {
+        yield 'retain visibility, write default, default private' => [
+            ['retain_visibility' => true, 'visibility' => 'private'],
+            [],
+            null,
+            'private'
+        ];
+        yield 'retain visibility, write default, default public' => [
+            ['retain_visibility' => true, 'visibility' => 'public'],
+            [],
+            null,
+            'public'
+        ];
+        yield 'retain visibility, write public, default private' => [
+            ['retain_visibility' => true, 'visibility' => 'private'],
+            [],
+            'public',
+            'public'
+        ];
+        yield 'retain visibility, write private, default public' => [
+            ['retain_visibility' => true, 'visibility' => 'public'],
+            [],
+            'private',
+            'private'
+        ];
+
+        yield 'retain visibility, write default, default private, execute public' => [
+            ['retain_visibility' => true, 'visibility' => 'private'],
+            ['visibility' => 'public'],
+            null,
+            'public'
+        ];
+        yield 'retain visibility, write default, default public, execute private' => [
+            ['retain_visibility' => true, 'visibility' => 'public'],
+            ['visibility' => 'private'],
+            null,
+            'private'
+        ];
+        yield 'retain visibility, write public, default private, execute private' => [
+            ['retain_visibility' => true, 'visibility' => 'private'],
+            ['visibility' => 'private'],
+            'public',
+            'private'
+        ];
+        yield 'retain visibility, write private, default public, execute public' => [
+            ['retain_visibility' => true, 'visibility' => 'public'],
+            ['visibility' => 'public'],
+            'private',
+            'public'
+        ];
+
+        yield 'do not retain visibility, write default, default private' => [
+            ['retain_visibility' => false, 'visibility' => 'private'],
+            [],
+            null,
+            'private'
+        ];
+        yield 'do not retain visibility, write default, default public' => [
+            ['retain_visibility' => false, 'visibility' => 'public'],
+            [],
+            null,
+            'public'
+        ];
+        yield 'do not retain visibility, write public, default private' => [
+            ['retain_visibility' => false, 'visibility' => 'private'],
+            [],
+            'public',
+            'private'
+        ];
+        yield 'do not retain visibility, write private, default public' => [
+            ['retain_visibility' => false, 'visibility' => 'public'],
+            [],
+            'private',
+            'public'
+        ];
+
+        yield 'do not retain visibility, write default, default private, execute public' => [
+            ['retain_visibility' => false, 'visibility' => 'private'],
+            ['visibility' => 'public'],
+            null,
+            'public'
+        ];
+        yield 'do not retain visibility, write default, default public, execute private' => [
+            ['retain_visibility' => false, 'visibility' => 'public'],
+            ['visibility' => 'private'],
+            null,
+            'private'
+        ];
+        yield 'do not retain visibility, write public, default private, execute public' => [
+            ['retain_visibility' => false, 'visibility' => 'private'],
+            ['visibility' => 'public'],
+            'public',
+            'public'
+        ];
+        yield 'do not retain visibility, write private, default public, execute private' => [
+            ['retain_visibility' => false, 'visibility' => 'public'],
+            ['visibility' => 'private'],
+            'private',
+            'private'
+        ];
     }
 }

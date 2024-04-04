@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace League\Flysystem\Local;
 
+use const LOCK_EX;
 use League\Flysystem\AdapterTestUtilities\FilesystemAdapterTestCase;
 use League\Flysystem\Config;
 use League\Flysystem\Filesystem;
@@ -35,7 +36,6 @@ use function mkdir;
 use function strnatcasecmp;
 use function symlink;
 use function usort;
-use const LOCK_EX;
 
 /**
  * @group local
@@ -85,6 +85,7 @@ class LocalFilesystemAdapterTest extends FilesystemAdapterTestCase
 
     /**
      * @test
+     *
      * @see https://github.com/thephpleague/flysystem/issues/1442
      */
     public function falling_back_to_extension_lookup_when_finding_mime_type_of_empty_file(): void
@@ -128,6 +129,7 @@ class LocalFilesystemAdapterTest extends FilesystemAdapterTestCase
 
     /**
      * @test
+     *
      * @see https://github.com/thephpleague/flysystem/issues/1606
      */
     public function deleting_a_file_during_contents_listing(): void
@@ -153,6 +155,7 @@ class LocalFilesystemAdapterTest extends FilesystemAdapterTestCase
             public function inverseForFile(int $visibility): string
             {
                 unlink(LocalFilesystemAdapterTest::ROOT . '/file-1.txt');
+
                 return $this->visibility->inverseForFile($visibility);
             }
 
@@ -539,6 +542,20 @@ class LocalFilesystemAdapterTest extends FilesystemAdapterTestCase
     /**
      * @test
      */
+    public function moving_a_file_with_visibility(): void
+    {
+        $adapter = new LocalFilesystemAdapter(static::ROOT, new PortableVisibilityConverter());
+        $adapter->write('first.txt', 'contents', new Config());
+        $this->assertFileExists(static::ROOT . '/first.txt');
+        $this->assertFileHasPermissions(static::ROOT . '/first.txt', 0644);
+        $adapter->move('first.txt', 'second.txt', new Config(['visibility' => 'private']));
+        $this->assertFileExists(static::ROOT . '/second.txt');
+        $this->assertFileHasPermissions(static::ROOT . '/second.txt', 0600);
+    }
+
+    /**
+     * @test
+     */
     public function not_being_able_to_move_a_file(): void
     {
         $this->expectException(UnableToMoveFile::class);
@@ -556,6 +573,37 @@ class LocalFilesystemAdapterTest extends FilesystemAdapterTestCase
         $adapter->copy('first.txt', 'second.txt', new Config());
         $this->assertFileExists(static::ROOT . '/second.txt');
         $this->assertFileExists(static::ROOT . '/first.txt');
+    }
+
+    /**
+     * @test
+     */
+    public function copying_a_file_with_visibility(): void
+    {
+        $adapter = new LocalFilesystemAdapter(static::ROOT, new PortableVisibilityConverter());
+        $adapter->write('first.txt', 'contents', new Config());
+        $adapter->copy('first.txt', 'second.txt', new Config(['visibility' => 'private']));
+        $this->assertFileExists(static::ROOT . '/first.txt');
+        $this->assertFileHasPermissions(static::ROOT . '/first.txt', 0644);
+        $this->assertFileExists(static::ROOT . '/second.txt');
+        $this->assertFileHasPermissions(static::ROOT . '/second.txt', 0600);
+    }
+
+    /**
+     * @test
+     */
+    public function copying_a_file_retaining_visibility(): void
+    {
+        $adapter = new LocalFilesystemAdapter(static::ROOT, new PortableVisibilityConverter());
+        $adapter->write('first.txt', 'contents', new Config(['visibility' => 'private']));
+        $adapter->copy('first.txt', 'retain.txt', new Config());
+        $adapter->copy('first.txt', 'do-not-retain.txt', new Config(['retain_visibility' => false]));
+        $this->assertFileExists(static::ROOT . '/first.txt');
+        $this->assertFileHasPermissions(static::ROOT . '/first.txt', 0600);
+        $this->assertFileExists(static::ROOT . '/retain.txt');
+        $this->assertFileHasPermissions(static::ROOT . '/retain.txt', 0600);
+        $this->assertFileExists(static::ROOT . '/do-not-retain.txt');
+        $this->assertFileHasPermissions(static::ROOT . '/do-not-retain.txt', 0644);
     }
 
     /**
@@ -580,6 +628,41 @@ class LocalFilesystemAdapterTest extends FilesystemAdapterTestCase
             new Config()
         );
         $this->assertStringStartsWith('image/svg+xml', $adapter->mimeType('flysystem.svg')->mimeType());
+    }
+
+    /**
+     * @test
+     */
+    public function failing_to_get_the_mimetype(): void
+    {
+        $adapter = new LocalFilesystemAdapter(static::ROOT);
+        $adapter->write(
+            'file.unknown',
+            '',
+            new Config()
+        );
+
+        $this->expectException(UnableToRetrieveMetadata::class);
+
+        $adapter->mimeType('file.unknown');
+    }
+
+    /**
+     * @test
+     */
+    public function allowing_inconclusive_mime_type(): void
+    {
+        $adapter = new LocalFilesystemAdapter(
+            location: static::ROOT,
+            useInconclusiveMimeTypeFallback: true,
+        );
+        $adapter->write(
+            'file.unknown',
+            '',
+            new Config()
+        );
+
+        $this->assertEquals('application/x-empty', $adapter->mimeType('file.unknown')->mimeType());
     }
 
     /**

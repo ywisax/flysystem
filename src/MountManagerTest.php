@@ -57,6 +57,102 @@ class MountManagerTest extends TestCase
     /**
      * @test
      */
+    public function copying_without_retaining_visibility(): void
+    {
+        // arrange
+        $firstFilesystemAdapter = new InMemoryFilesystemAdapter();
+        $secondFilesystemAdapter = new InMemoryFilesystemAdapter();
+        $mountManager = new MountManager([
+            'first' => new Filesystem($firstFilesystemAdapter, ['visibility' => 'public']),
+            'second' => new Filesystem($secondFilesystemAdapter, ['visibility' => 'private']),
+        ], ['retain_visibility' => false]);
+
+        // act
+        $mountManager->write('first://file.txt', 'contents');
+        $mountManager->copy('first://file.txt', 'second://file.txt');
+
+        // assert
+        $visibility = $mountManager->visibility('second://file.txt');
+        self::assertEquals('private', $visibility);
+    }
+
+    /**
+     * @test
+     */
+    public function extending_without_new_mounts_is_equal_but_not_the_same(): void
+    {
+        $mountManager = $this->mountManager->extend([]);
+
+        $this->assertNotSame($this->mountManager, $mountManager);
+        $this->assertEquals($this->mountManager, $mountManager);
+    }
+
+    /**
+     * @test
+     */
+    public function extending_with_new_mounts_is_not_equal(): void
+    {
+        $mountManager = $this->mountManager->extend([
+            'third' => new Filesystem(new InMemoryFilesystemAdapter()),
+        ]);
+
+        $this->assertNotEquals($this->mountManager, $mountManager);
+    }
+
+    /**
+     * @test
+     */
+    public function extending_exposes_a_usable_mount_on_the_extension(): void
+    {
+        $mountManager = $this->mountManager->extend([
+            'third' => new Filesystem(new InMemoryFilesystemAdapter()),
+        ]);
+
+        $mountManager->write('third://path.txt', 'this');
+        $contents = $mountManager->read('third://path.txt');
+
+        $this->assertEquals('this', $contents);
+    }
+
+    /**
+     * @test
+     */
+    public function extending_does_not_mount_on_the_original_mount_manager(): void
+    {
+        $this->mountManager->extend([
+            'third' => new Filesystem(new InMemoryFilesystemAdapter()),
+        ]);
+
+        $this->expectException(UnableToResolveFilesystemMount::class);
+
+        $this->mountManager->write('third://path.txt', 'this');
+    }
+
+    /**
+     * @test
+     */
+    public function copying_while_retaining_visibility(): void
+    {
+        // arrange
+        $firstFilesystemAdapter = new InMemoryFilesystemAdapter();
+        $secondFilesystemAdapter = new InMemoryFilesystemAdapter();
+        $mountManager = new MountManager([
+            'first' => new Filesystem($firstFilesystemAdapter, ['visibility' => 'public']),
+            'second' => new Filesystem($secondFilesystemAdapter, ['visibility' => 'private']),
+        ], ['retain_visibility' => true]);
+
+        // act
+        $mountManager->write('first://file.txt', 'contents');
+        $mountManager->copy('first://file.txt', 'second://file.txt');
+
+        // assert
+        $visibility = $mountManager->visibility('second://file.txt');
+        self::assertEquals('public', $visibility);
+    }
+
+    /**
+     * @test
+     */
     public function writing_a_file(): void
     {
         $this->mountManager->write('first://file.txt', 'content');
@@ -112,7 +208,9 @@ class MountManagerTest extends TestCase
 
     /**
      * @description This test method is so ugly, but I don't have the energy to create a nice test for every single one of these method.
+     *
      * @test
+     *
      * @dataProvider dpMetadataRetrieverMethods
      */
     public function failing_a_one_param_method(string $method, FilesystemOperationFailed $exception): void
@@ -454,6 +552,18 @@ class MountManagerTest extends TestCase
         $contents = $this->mountManager->listContents('first://', FilesystemReader::LIST_DEEP)->toArray();
 
         $this->assertCount(3, $contents);
+    }
+
+    /**
+     * @test
+     */
+    public function dangerously_mounting_additional_filesystems(): void
+    {
+        $this->firstFilesystem->write('contents.txt', 'file contents');
+
+        $this->mountManager->dangerouslyMountFilesystems('unknown', $this->firstFilesystem);
+
+        $this->assertTrue($this->mountManager->fileExists('unknown://contents.txt'));
     }
 
     /**

@@ -31,7 +31,7 @@ class SftpAdapterTest extends FilesystemAdapterTestCase
     }
 
     /**
-     * @var ConnectionProvider
+     * @var StubSftpConnectionProvider
      */
     private static $connectionProvider;
 
@@ -217,6 +217,22 @@ class SftpAdapterTest extends FilesystemAdapterTestCase
 
     /**
      * @test
+     */
+    public function it_can_proactively_close_a_connection(): void
+    {
+        /** @var SftpAdapter $adapter */
+        $adapter = $this->adapter();
+
+        self::assertFalse($adapter->fileExists('does not exists at all'));
+
+        self::assertTrue(static::$connectionProvider->connection->isConnected());
+
+        $adapter->disconnect();
+
+        self::assertFalse(static::$connectionProvider->connection->isConnected());
+    }
+    /**
+     * @test
      * @fixme Move to FilesystemAdapterTestCase once all adapters pass
      */
     public function moving_a_file_and_overwriting(): void
@@ -247,7 +263,7 @@ class SftpAdapterTest extends FilesystemAdapterTestCase
         });
     }
 
-    private static function connectionProvider(): ConnectionProvider
+    private static function connectionProvider(): StubSftpConnectionProvider
     {
         if ( ! static::$connectionProvider instanceof ConnectionProvider) {
             static::$connectionProvider = new StubSftpConnectionProvider('localhost', 'foo', 'pass', 2222);
@@ -262,8 +278,7 @@ class SftpAdapterTest extends FilesystemAdapterTestCase
     private function adapterWithInvalidRoot(): SftpAdapter
     {
         $provider = static::connectionProvider();
-        $adapter = new SftpAdapter($provider, '/invalid');
 
-        return $adapter;
+        return new SftpAdapter($provider, '/invalid');
     }
 }
