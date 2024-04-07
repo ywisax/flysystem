@@ -5,6 +5,7 @@
 ### Fixed
 
 - Corrected AWS SSE-C Options
+- Handle MetadataDirective gracefully.
 
 ## 3.26.0 - 2024-03-25
 
