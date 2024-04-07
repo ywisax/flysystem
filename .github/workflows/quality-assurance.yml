@@ -10,13 +10,14 @@ on:
       - .github/workflows/quality-assurance.yml
     branches:
       - 3.x
+      - 4.x
   pull_request:
     paths:
       - src/**/*.php
       - .github/workflows/quality-assurance.yml
     branches:
-      - 2.x
       - 3.x
+      - 4.x
   schedule:
     - cron: "5 1 * * *"
 
