@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.26.0 - 2024-04-07
+
+### Fixed
+
+- Corrected AWS SSE-C Options
+
 ## 3.26.0 - 2024-03-25
 
 ### Fixed
