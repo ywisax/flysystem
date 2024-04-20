@@ -27,6 +27,7 @@ use League\MimeTypeDetection\FinfoMimeTypeDetector;
 use League\MimeTypeDetection\MimeTypeDetector;
 use Throwable;
 
+use function array_map;
 use function error_clear_last;
 use function error_get_last;
 use function ftp_chdir;
@@ -489,7 +490,9 @@ class FtpAdapter implements FilesystemAdapter
 
         // convert the groups
         $mapper = static function ($part) {
-            return array_sum(str_split($part));
+            return array_sum(array_map(static function ($p) {
+                return (int) $p;
+            }, str_split($part)));
         };
 
         // converts to decimal number
