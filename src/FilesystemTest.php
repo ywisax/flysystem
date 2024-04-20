@@ -7,6 +7,8 @@ namespace League\Flysystem;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Generator;
+use GuzzleHttp\Psr7\StreamWrapper;
+use GuzzleHttp\Psr7\Utils;
 use IteratorAggregate;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use League\Flysystem\Local\LocalFilesystemAdapter;
@@ -96,6 +98,21 @@ class FilesystemTest extends TestCase
         $this->assertEquals('contents', stream_get_contents($readStream));
 
         fclose($readStream);
+    }
+
+    /**
+     * @test
+     */
+    public function writing_using_a_stream_wrapper(): void
+    {
+        $contents = 'contents of the file';
+        $stream = Utils::streamFor($contents);
+        $resource = StreamWrapper::getResource($stream);
+
+        $this->filesystem->writeStream('from-stream-wrapper.txt', $resource);
+        fclose($resource);
+
+        $this->assertEquals($contents, $this->filesystem->read('from-stream-wrapper.txt'));
     }
 
     /**

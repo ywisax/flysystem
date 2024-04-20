@@ -35,7 +35,8 @@
         "google/cloud-storage": "^1.23",
         "async-aws/s3": "^1.5 || ^2.0",
         "async-aws/simple-s3": "^1.1 || ^2.0",
-        "sabre/dav": "^4.6.0"
+        "sabre/dav": "^4.6.0",
+        "guzzlehttp/psr7": "^2.6"
     },
     "conflict": {
         "async-aws/core": "<1.19.0",
