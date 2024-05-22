@@ -34,5 +34,6 @@ return (new PhpCsFixer\Config())
         ],
         'no_extra_blank_lines' => true,
         'no_whitespace_in_blank_line' => true,
+        'nullable_type_declaration_for_default_null_value' => true,
     ])
     ->setFinder($finder);
