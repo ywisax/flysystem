@@ -26,7 +26,7 @@ Official Adapters:
     AsyncAws S3: '/docs/adapter/async-aws-s3/'
     Azure Blob Storage: '/docs/adapter/azure-blob-storage/'
     Google Cloud Storage: '/docs/adapter/google-cloud-storage/'
-    MongoDB GridFS: '/docs/adapter/mongodb-gridfs/'
+    MongoDB GridFS: '/docs/adapter/gridfs/'
     SFTP (V2): '/docs/adapter/sftp-v2/'
     SFTP (V3): '/docs/adapter/sftp-v3/'
     WebDAV: '/docs/adapter/webdav/'
