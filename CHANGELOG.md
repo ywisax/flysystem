@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.28.0 - 2024-05-22
+
+### Added
+
+- MongoDB GridFS adapter (by @GromNaN)
+
+### Fixed
+
+- PHP 8.3 directory listing issue for the FTP adapter (by @lanz1)
+
 ## 3.27.0 - 2024-04-07
 
 ### Fixed
