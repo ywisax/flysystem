@@ -69,6 +69,11 @@
             "name": "adapter-test-utilities",
             "directory": "src/AdapterTestUtilities",
             "target": "git@github.com:thephpleague/flysystem-adapter-test-utilities.git"
+        },
+        {
+            "name": "gridfs",
+            "directory": "src/GridFS",
+            "target": "git@github.com:thephpleague/flysystem-gridfs.git"
         }
     ]
 }
