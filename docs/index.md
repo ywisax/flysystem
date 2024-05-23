@@ -40,7 +40,7 @@ for which ever storage is right for you.
 * **[AsyncAws S3](/docs/adapter/async-aws-s3/)**
 * **[Google Cloud Storage](/docs/adapter/google-cloud-storage/)**
 * **[Azure Blob Storage](/docs/adapter/azure-blob-storage/)**
-* **[MongoDB GridFS](/docs/adapter/mongodb-gridfs/)**
+* **[MongoDB GridFS](/docs/adapter/gridfs/)**
 * **[WebDAV](/docs/adapter/webdav/)**
 
 ### Third party Adapters
