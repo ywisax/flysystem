@@ -327,13 +327,19 @@ class SftpAdapter implements FilesystemAdapter
             return;
         }
 
-        if ($this->fileExists($destination)) {
-            $this->delete($destination);
+        if ($connection->rename($sourceLocation, $destinationLocation)) {
+            return;
         }
 
-        if ( ! $connection->rename($sourceLocation, $destinationLocation)) {
-            throw UnableToMoveFile::fromLocationTo($source, $destination);
+        // Overwrite existing file / dir
+        if ($connection->is_file($destinationLocation)) {
+            $this->delete($destination);
+            if ($connection->rename($sourceLocation, $destinationLocation)) {
+                return;
+            }
         }
+
+        throw UnableToMoveFile::fromLocationTo($source, $destination);
     }
 
     public function copy(string $source, string $destination, Config $config): void
