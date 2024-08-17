@@ -81,7 +81,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
 
     protected function setUp(): void
     {
-        if (PHP_VERSION_ID < 801000) {
+        if (PHP_VERSION_ID < 80100) {
             $this->markTestSkipped('AWS does not support this anymore.');
         }
 
