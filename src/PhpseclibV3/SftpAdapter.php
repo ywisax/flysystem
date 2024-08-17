@@ -323,6 +323,10 @@ class SftpAdapter implements FilesystemAdapter
             throw UnableToMoveFile::fromLocationTo($source, $destination, $exception);
         }
 
+        if ($sourceLocation === $destinationLocation) {
+            return;
+        }
+
         if ($connection->rename($sourceLocation, $destinationLocation)) {
             return;
         }
