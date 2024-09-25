@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace League\Flysystem\AdapterTestUtilities;
 
+use function json_encode;
 use const PHP_EOL;
 use DateInterval;
 use DateTimeImmutable;
@@ -222,6 +223,35 @@ abstract class FilesystemAdapterTestCase extends TestCase
 
             $contents = $adapter->read('path.txt');
             $this->assertEquals('', $contents);
+        });
+    }
+
+    /**
+     * @test
+     */
+    public function listing_metadata_for_a_file(): void
+    {
+        $this->givenWeHaveAnExistingFile('something.csv', '');
+
+        $metadata = $this->adapter()->metadata('something.csv', new Config);
+
+        $this->assertFalse($metadata->isDir());
+        $this->assertTrue($metadata->isFile());
+    }
+
+    /**
+     * @test
+     */
+    public function retrieving_metadata_for_a_directory(): void
+    {
+        $this->runScenario(function () {
+            $adapter = $this->adapter();
+            $adapter->createDirectory('somewhere/here/', new Config());
+
+            $metadata = $adapter->metadata('somewhere/here/', new Config());
+
+            $this->assertTrue($metadata->isDir());
+            $this->assertFalse($metadata->isFile());
         });
     }
 
@@ -539,7 +569,7 @@ abstract class FilesystemAdapterTestCase extends TestCase
         $this->runScenario(function () {
             $contents = iterator_to_array($this->adapter()->listContents('', true));
 
-            $this->assertCount(2, $contents);
+            $this->assertCount(2, $contents, json_encode($contents));
         });
     }
 
