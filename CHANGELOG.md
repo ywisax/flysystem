@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.29.0 - 2024-09-29
+
+### Changes
+
+- [FTP] Add error context from error messages
+- [SFTP] overwrite on move
+- [AWS S3] same path copy/move no-op
+- [Async S3] transform error to flysystem errors
+
 ## 3.28.0 - 2024-05-22
 
 ### Added
