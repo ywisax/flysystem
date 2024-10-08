@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.29.1 - 2024-10-08
+
+### Fixes
+
+- Normalise path for checksum call
+
 ## 3.29.0 - 2024-09-29
 
 ### Changes
