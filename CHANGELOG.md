@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.30.0 - 2024-12-10
+
+### Changes
+
+- [MongoDB] Allow v2
+
 ## 3.29.1 - 2024-10-08
 
 ### Fixes
