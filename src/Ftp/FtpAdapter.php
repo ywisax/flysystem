@@ -84,18 +84,20 @@ class FtpAdapter implements FilesystemAdapter
      */
     private function connection()
     {
-        start:
-        if ( ! $this->hasFtpConnection()) {
-            $this->connection = $this->connectionProvider->createConnection($this->connectionOptions);
-            $this->rootDirectory = $this->resolveConnectionRoot($this->connection);
-            $this->prefixer = new PathPrefixer($this->rootDirectory);
+        while (true) {
+            if ( ! $this->hasFtpConnection()) {
+                $this->connection = $this->connectionProvider->createConnection($this->connectionOptions);
+                $this->rootDirectory = $this->resolveConnectionRoot($this->connection);
+                $this->prefixer = new PathPrefixer($this->rootDirectory);
 
-            return $this->connection;
-        }
+                return $this->connection;
+            }
 
-        if ($this->connectivityChecker->isConnected($this->connection) === false) {
-            $this->connection = false;
-            goto start;
+            if ($this->connectivityChecker->isConnected($this->connection) === false) {
+                $this->connection = false;
+                continue;
+            }
+            break;
         }
 
         ftp_chdir($this->connection, $this->rootDirectory);
