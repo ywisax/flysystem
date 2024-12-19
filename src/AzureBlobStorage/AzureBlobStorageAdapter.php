@@ -191,18 +191,20 @@ class AzureBlobStorageAdapter implements FilesystemAdapter, PublicUrlGenerator, 
         $options->setPrefix($resolved);
 
         try {
-            start:
-            $listResults = $this->client->listBlobs($this->container, $options);
+            while (true) {
+                $listResults = $this->client->listBlobs($this->container, $options);
 
-            foreach ($listResults->getBlobs() as $blob) {
-                $this->client->deleteBlob($this->container, $blob->getName());
-            }
+                foreach ($listResults->getBlobs() as $blob) {
+                    $this->client->deleteBlob($this->container, $blob->getName());
+                }
 
-            $continuationToken = $listResults->getContinuationToken();
+                $continuationToken = $listResults->getContinuationToken();
 
-            if ($continuationToken instanceof ContinuationToken) {
-                $options->setContinuationToken($continuationToken);
-                goto start;
+                if ($continuationToken instanceof ContinuationToken) {
+                    $options->setContinuationToken($continuationToken);
+                    continue;
+                }
+                break;
             }
         } catch (Throwable $exception) {
             throw UnableToDeleteDirectory::atLocation($path, $exception->getMessage(), $exception);
